@@ -1,51 +1,34 @@
 # ghidra-decompile
 
-An agent skill for decompiling binaries with Ghidra, plus the Ghidra scripts it drives.
+An agent skill for decompiling binaries with Ghidra, plus the 22 Ghidra scripts it drives.
 
-It gives an LLM agent a repeatable path from "I need the C for this address" to real pseudocode, and a documented way out when the tooling breaks.
+## Install
+
+```sh
+npx skills add ioma8/ghidra-decompile-skill
+```
+
+Node 22.20+. Installs into the current project; add `-g` for every project. Then copy `tools/*.java` to `~/ghidra_scripts`, or pass that directory as `-scriptPath` on headless runs.
+
+Without the CLI, copy `SKILL.md` into your agent's skills directory as `ghidra-decompile/SKILL.md`.
 
 ## The idea that matters
 
-**The cost is analysis, not decompilation.**
-
-A 114 MB stripped AArch64 image, imported once with `-noanalysis`, decompiled at one targeted function in **3.3 s** on a reuse run. Full auto-analysis of the same image takes hours, and is rarely needed to read a single function.
+**The cost is analysis, not decompilation.** A 114 MB stripped AArch64 image, imported once with `-noanalysis`, decompiled at one targeted function in **3.3 s**. Full auto-analysis of the same image takes hours, and is rarely needed to read one function.
 
 So: import once, keep the project, decompile exact addresses. `SKILL.md` is the method.
 
 ## What's here
 
-| Path | What |
-|---|---|
-| `SKILL.md` | The skill. Choosing a path, pinning addresses to the image base, headless decompile, the bridge, validating the output, and a symptom → cause → fix table |
-| `tools/*.java` | 22 Ghidra scripts: decompile at explicit addresses, vtable/RTTI dumps, string and constant xrefs, backwards `PACIASP` scan for AArch64 entries |
-| `tools/run_bridge.py` | stdio driver — one MCP session for initialize → connect → run script |
-| `tools/README.md` | Script-by-script notes |
-| `docs/` | The method these scripts came out of: `TOOLING.md` (tool-by-tool invocations) and `RE-METHOD.md` (how claims are ranked, which paths looked right and were blind, hardening rules) |
+- `SKILL.md` — pinning addresses to the image base, headless decompile, the MCP bridge, validating the output, and a symptom → cause → fix table
+- `tools/` — 22 scripts (decompile at address, vtable/RTTI dumps, xrefs, `PACIASP` entry scan) and a stdio runner, with script-by-script notes in `tools/README.md`
+- [`TOOLING.md`](docs/TOOLING.md) and [`RE-METHOD.md`](docs/RE-METHOD.md) — the tooling and the method these scripts came out of
 
-## Requires
+Needs Ghidra, verified on 12.2. The bridge path also needs [bethington/ghidra-mcp](https://github.com/bethington/ghidra-mcp) and `uv`; headless decompilation needs neither.
 
-- Ghidra — verified against 12.2 (`$HOME/Applications/ghidra_12.2_PUBLIC`)
-- For the bridge path only: [bethington/ghidra-mcp](https://github.com/bethington/ghidra-mcp) and `uv`
+## The trap
 
-Headless decompilation needs neither the bridge nor Python.
-
-## Install
-
-As a skill: copy `SKILL.md` into your agent's skills directory as `ghidra-decompile/SKILL.md`.
-
-For the scripts: copy `tools/*.java` to `~/ghidra_scripts`, or pass the directory as `-scriptPath` on headless runs.
-
-## The trap worth knowing about
-
-The released `GhidraMCP-7.0.0.zip` is built for **Ghidra 12.1.4**. Against 12.2, every decompile fails with:
-
-```
-ghidra/program/model/lang/SleighLanguageDescription
-```
-
-Build the `chore/ghidra-12.2` branch instead, then confirm `extension.properties` reports `version=12.2`. `SKILL.md` has the full sequence, including the `GHIDRA_MCP_ALLOW_SCRIPTS=1` default change and the 7.0.0 tool consolidation — `decompile_function` is gone, use `get_functions`.
-
-On the reference build the rebuilt extension advertised 216 endpoints and a 69,271-function analysis survived a Ghidra restart. Treat those as install checks, not portable counts.
+`GhidraMCP-7.0.0.zip` is built for **Ghidra 12.1.4**. Against 12.2, every decompile fails with `ghidra/program/model/lang/SleighLanguageDescription`. Build the `chore/ghidra-12.2` branch, then confirm `extension.properties` reports `version=12.2`. The full sequence is in `SKILL.md`.
 
 ## License
 
