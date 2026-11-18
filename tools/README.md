@@ -1,9 +1,11 @@
 # HPSS Ghidra research scripts
 
 These Java scripts run through GhidraMCP, using the setup in
-[SKILL.md § Use the bridge](../SKILL.md#4-use-the-bridge-for-the-persistent-project).
-The runner preserves a single MCP session for initialization, instance connection
-and script execution.
+[`TOOLING.md`](../docs/TOOLING.md#1-ghidra-and-the-mcp-bridge) and
+[`SKILL.md`](../SKILL.md#4-use-the-bridge-for-the-persistent-project). The runner
+preserves a single MCP session for initialization, instance connection and script
+execution. What these scripts found, and which static paths were blind, is recorded
+in [`RE-METHOD.md`](../docs/RE-METHOD.md).
 
 Copy the Java files to Ghidra's script directory (`~/ghidra_scripts` in this
 session). Start Ghidra with `GHIDRA_MCP_ALLOW_SCRIPTS=1`, open project
