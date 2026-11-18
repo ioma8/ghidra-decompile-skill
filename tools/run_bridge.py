@@ -83,13 +83,21 @@ def main():
         p.stdin.flush()
 
         err, text = tool(2, "connect_instance", {"project": a.project} if a.project else {})
-        if err:
+        # A failed attach is reported as {"error": ...} in the payload with isError false,
+        # so isError alone is not enough to tell success from failure.
+        try:
+            payload = json.loads(text)
+        except (ValueError, TypeError):
+            payload = None
+        attach_error = payload.get("error") if isinstance(payload, dict) else None
+        if err or attach_error:
+            detail = str(attach_error or text).strip().splitlines()[0]
             hint = ""
-            if "project" in text.lower():
+            if "project" in detail.lower():
                 hint = "\n  -> pass --project <name>"
-            elif "instance" in text.lower():
-                hint = "\n  -> start Ghidra, open the project, then retry"
-            sys.exit("connect_instance failed: %s%s" % (text.strip().splitlines()[0], hint))
+            elif "instance" in detail.lower():
+                hint = "\n  -> start Ghidra with that project open, then retry"
+            sys.exit("connect_instance failed: %s%s" % (detail, hint))
 
         script_args = {
             "script_name": a.script,
