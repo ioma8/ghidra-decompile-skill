@@ -20,6 +20,7 @@ So: import once, keep the project, decompile exact addresses. `SKILL.md` is the 
 | `tools/*.java` | 22 Ghidra scripts: decompile at explicit addresses, vtable/RTTI dumps, string and constant xrefs, backwards `PACIASP` scan for AArch64 entries |
 | `tools/run_bridge.py` | stdio driver — one MCP session for initialize → connect → run script |
 | `tools/README.md` | Script-by-script notes |
+| `docs/` | The method these scripts came out of: `TOOLING.md` (tool-by-tool invocations) and `RE-METHOD.md` (how claims are ranked, which paths looked right and were blind, hardening rules) |
 
 ## Requires
 
