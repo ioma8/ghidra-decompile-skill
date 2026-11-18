@@ -148,7 +148,7 @@ uv tool install https://github.com/bethington/ghidra-mcp/releases/download/v7.0.
 which bridge-mcp-ghidra
 ```
 
-Skip the install when `which bridge-mcp-ghidra` already resolves. Point the MCP client at the absolute path (a GUI-launched client does not inherit your shell `PATH`). With no project selector the bridge auto-connects to the running instance.
+Skip the install when `which bridge-mcp-ghidra` already resolves. Point the MCP client at the absolute path (a GUI-launched client does not inherit your shell `PATH`). `connect_instance` takes a **required** `project` name on the build verified here (1.30.0); omitting it fails validation instead of auto-connecting to the running instance.
 
 ### Tool names that actually exist in 7.0.0
 
@@ -159,7 +159,7 @@ Skip the install when `which bridge-mcp-ghidra` already resolves. Point the MCP 
 - `find_functions`, `get_entry_points`, `list_strings`, `get_xrefs_to`, `get_function_call_graph`, `get_metadata`, `list_program_items`.
 - `run_ghidra_script(script_name, args, program, timeout_seconds=300, capture_output=true)`.
 
-Lazy loading is the default: `tools/list` shows only the 8 static tools plus the `listing,function,program` groups. Discover the rest with `search_tools("decompile")`, then `load_tool_group("xref")`. This is not a broken bridge: before `connect_instance`, only the 8 static tools exist.
+Lazy loading is the default. Until `connect_instance` has attached to a live Ghidra, `tools/list` is exactly the 8 static tools — `list_instances`, `connect_instance`, `list_tool_groups`, `load_tool_group`, `unload_tool_group`, `check_tools`, `search_tools`, `import_file` — in both `--lazy` and `--no-lazy` modes, and `search_tools` returns zero matches. `--no-lazy` does not preload the rest: the groups cannot be enumerated while no instance is connected. This is not a broken bridge. Once attached, discover them with `search_tools("decompile")` and `load_tool_group("xref")`.
 
 Call `connect_instance(project="...")` before the first program-scoped call. With several programs open, pass `program=` on every program-scoped call, or set `GHIDRA_MCP_REQUIRE_PROGRAM_SELECTORS=1` to make omissions an error instead of silently reading the active tab.
 
@@ -234,7 +234,9 @@ Copy them to `~/ghidra_scripts` for the GUI, or pass their directory as `-script
 | no functions, only bytes | `-noanalysis` means Ghidra discovered nothing | `disassemble` + `createFunction` at the target, as the script does |
 | `run_ghidra_script` returns 403 | scripts disabled | start Ghidra with `GHIDRA_MCP_ALLOW_SCRIPTS=1` |
 | `list_instances` is empty | no Ghidra GUI running with a project open | start Ghidra, open the program, retry |
-| `tools/list` shows only 8 tools | bridge has not connected yet | call `connect_instance(project=...)`; then load groups if lazy |
+| `tools/list` shows only 8 tools | no live instance attached; identical in `--lazy` and `--no-lazy` | call `connect_instance(project=...)` against a running Ghidra, then load groups |
+| `connect_instance` → `project Field required` | `project` is required on 1.30.0 | pass `project="..."`; there is no auto-connect |
+| connect returns `{"error": "No instance matching ..."}`, yet `isError` is false | the attach failed but the call looked successful | start Ghidra with that project open; confirm with `list_instances` |
 | a tool is missing from `tools/list` | lazy group not loaded | `search_tools(...)` then `load_tool_group("xref")` |
 | wrong function decompiled | several programs/projects open | pass `program=`; enable `GHIDRA_MCP_REQUIRE_PROGRAM_SELECTORS=1` |
 | function output looks like a continuation | address was mid-function or in data | read the disassembly around it; re-create at the real entry |
